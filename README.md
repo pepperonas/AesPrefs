@@ -16,7 +16,7 @@ Add JitPack to your repositories:
 and add the library to your dependencies:
 
 ```
-    compile 'com.github.pepperonas:aesprefs:0.2.0'
+    compile 'com.github.pepperonas:aesprefs:0.3.0'
 ```
 
 
