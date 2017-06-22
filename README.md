@@ -20,6 +20,14 @@ and add the library to your dependencies:
 ```
 
 
+## Future releases
+
+- get app stats
+- get preference stats
+- print all prefs
+- unit-tests
+
+
 ## ProGuard
 ```
 -keep class com.pepperonas.aesprefs.** { *; }

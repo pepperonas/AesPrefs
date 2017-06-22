@@ -17,6 +17,7 @@
 package com.pepperonas.aesprefs;
 
 import android.support.annotation.Nullable;
+
 import java.io.UnsupportedEncodingException;
 import java.security.AlgorithmParameters;
 import java.security.InvalidAlgorithmParameterException;
@@ -26,6 +27,7 @@ import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.InvalidParameterSpecException;
 import java.security.spec.KeySpec;
+
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
@@ -70,7 +72,7 @@ public class Crypt {
          * Instantiates a new Crypt set.
          *
          * @param encrypted the encrypted
-         * @param iv the iv
+         * @param iv        the iv
          */
         public CryptSet(byte[] encrypted, byte[] iv) {
             this.encrypted = encrypted;
@@ -96,7 +98,6 @@ public class Crypt {
         }
     }
 
-
     /**
      * The type Key set.
      */
@@ -109,7 +110,7 @@ public class Crypt {
          * Instantiates a new Key set.
          *
          * @param secretKey the secret key
-         * @param salt the salt
+         * @param salt      the salt
          */
         public KeySet(SecretKey secretKey, byte[] salt) {
             this.secretKey = secretKey;
@@ -139,8 +140,8 @@ public class Crypt {
      * Encrypt crypt set.
      *
      * @param password the password
-     * @param salt the salt
-     * @param text the text
+     * @param salt     the salt
+     * @param text     the text
      * @return the crypt set
      */
     public static CryptSet encrypt(String password, String salt, String text) {
@@ -152,7 +153,7 @@ public class Crypt {
             e.printStackTrace();
         }
         KeySpec spec = new PBEKeySpec(password.toCharArray(), salt.getBytes(),
-            DERIVATION_ITERATION_COUNT, KEY_SIZE);
+                DERIVATION_ITERATION_COUNT, KEY_SIZE);
         SecretKey tmp = null;
         try {
             if (factory != null) {
@@ -203,9 +204,9 @@ public class Crypt {
     /**
      * Decrypt string.
      *
-     * @param password the password
-     * @param salt the salt
-     * @param iv the iv
+     * @param password       the password
+     * @param salt           the salt
+     * @param iv             the iv
      * @param encryptedBytes the encryptedBytes
      * @return the string
      */
@@ -218,7 +219,7 @@ public class Crypt {
             e.printStackTrace();
         }
         KeySpec spec = new PBEKeySpec(password.toCharArray(), salt.getBytes(),
-            DERIVATION_ITERATION_COUNT, KEY_SIZE);
+                DERIVATION_ITERATION_COUNT, KEY_SIZE);
         SecretKey tmp = null;
         try {
             if (factory != null) {
@@ -255,17 +256,16 @@ public class Crypt {
         return decrypted;
     }
 
-
     /**
      * Gets secret key.
-     *
+     * <p>
      * It's time-consuming! Derive as less as possible.
-     *
+     * <p>
      * Phone: ~ 1500ms
      * Laptop: ~ 330ms
      *
      * @param password the password
-     * @param srBytes the sr bytes, pass {@null} to generate a new {@java.security.SecureRandom}
+     * @param srBytes  the sr bytes, pass {@null} to generate a new {@java.security.SecureRandom}
      * @return the secret key
      */
     public static KeySet getSecretKey(String password, @Nullable byte[] srBytes) {
@@ -289,7 +289,7 @@ public class Crypt {
             e.printStackTrace();
         }
         KeySpec spec = new PBEKeySpec(password.toCharArray(), srBytes,
-            DERIVATION_ITERATION_COUNT, KEY_SIZE);
+                DERIVATION_ITERATION_COUNT, KEY_SIZE);
         SecretKey tmp = null;
         try {
             if (factory != null) {
@@ -304,15 +304,14 @@ public class Crypt {
         return null;
     }
 
-
     /**
      * Enc byte [ ].
-     *
+     * <p>
      * Phone: ~ 5ms
      * Laptop: ~ 1ms
      *
      * @param secret the secret
-     * @param text the text
+     * @param text   the text
      * @return the byte [ ]
      */
     public static CryptSet enc(SecretKey secret, String text) {
@@ -359,18 +358,18 @@ public class Crypt {
         return new CryptSet(encrypted, iv);
     }
 
-
     /**
      * Dec string.
-     *
+     * <p>
      * Phone: ~ 5ms
      * Laptop: < 1ms
      *
-     * @param secret the secret
-     * @param iv the iv
+     * @param secret    the secret
+     * @param iv        the iv
      * @param encrypted the encrypted
      * @return the string
      */
+    @Nullable
     public static String dec(SecretKey secret, byte[] iv, byte[] encrypted) {
         String decrypted = null;
         Cipher cipher = null;
@@ -380,7 +379,7 @@ public class Crypt {
             e.printStackTrace();
         }
         try {
-            if (cipher != null) {
+            if (cipher != null && secret != null && iv != null && iv.length != 0) {
                 cipher.init(Cipher.DECRYPT_MODE, secret, new IvParameterSpec(iv));
             }
         } catch (InvalidKeyException | InvalidAlgorithmParameterException e) {

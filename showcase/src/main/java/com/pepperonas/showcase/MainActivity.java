@@ -21,8 +21,10 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+
 import com.pepperonas.aesprefs.AesPrefs;
 import com.pepperonas.aesprefs.AesPrefs.LogMode;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -37,21 +39,53 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        String dy = String.valueOf(System.currentTimeMillis());
+
         AesPrefs.init(this, "password", LogMode.ALL);
-        AesPrefs.put("some_key", "some_value");
-        AesPrefs.putInt("key_001", 123);
-        System.out.println(AesPrefs.get("some_key", null));
-        System.out.println(AesPrefs.getInt("key_001", null));
+        //        AesPrefs.put("some_key", "some_value");
+        //        AesPrefs.putInt("key_001", 123);
+        Log.i(TAG, "some_value? " + AesPrefs.get("some_key", null));
+        Log.i(TAG, "123? " + AesPrefs.getInt("key_001", null));
 
         List<String> strings = new ArrayList<>();
         strings.add("hello");
         strings.add("world");
         AesPrefs.storeArray("STR_ARRAY", strings);
-        System.out.println(AesPrefs.restoreArray("STR_ARRAY"));
+        Log.i(TAG, "" + AesPrefs.restoreArray("STR_ARRAY"));
+
+        boolean isNew = AesPrefs.initInt("ix", 2);
+        Log.i(TAG, "2? " + AesPrefs.getInt("ix", -1) + " new=" + isNew);
+        isNew = AesPrefs.initInt("ix", 3);
+        Log.i(TAG, "2? " + AesPrefs.getInt("ix", -1) + " new=" + isNew);
+
+        boolean isNewBool = AesPrefs.initBool("bx" + dy, true);
+        Log.i(TAG, "true? " + AesPrefs.getBool("bx" + dy, false) + " new=" + isNewBool);
+        isNewBool = AesPrefs.initBool("bx" + dy, false);
+        Log.i(TAG, "true? " + AesPrefs.getBool("bx" + dy, false) + " new=" + isNewBool);
+
+        boolean isNewDouble = AesPrefs.initDouble("dx" + dy, 123.456D);
+        Log.i(TAG, "123.456? " + AesPrefs.getDouble("dx" + dy, -1D) + " new=" + isNewDouble);
+        isNewDouble = AesPrefs.initDouble("dx" + dy, 654.321D);
+        Log.i(TAG, "123.456? " + AesPrefs.getDouble("dx" + dy, -1D) + " new=" + isNewDouble);
+
+        boolean isNewFloat = AesPrefs.initFloat("fx" + dy, 123.456F);
+        Log.i(TAG, "123.456? " + AesPrefs.getFloat("fx" + dy, -1F) + " new=" + isNewFloat);
+        isNewFloat = AesPrefs.initFloat("fx" + dy, 654.321F);
+        Log.i(TAG, "123.456? " + AesPrefs.getFloat("fx" + dy, -1F) + " new=" + isNewFloat);
+
+        boolean isNewLong = AesPrefs.initLong("lx" + dy, 123456L);
+        Log.i(TAG, "123456? " + AesPrefs.getLong("lx" + dy, -1L) + " new=" + isNewLong);
+        isNewLong = AesPrefs.initLong("lx" + dy, 654321L);
+        Log.i(TAG, "123456? " + AesPrefs.getLong("lx" + dy, -1L) + " new=" + isNewLong);
+
+        AesPrefs.putInt("t-null-int", 1);
+        Log.i(TAG, "1? " + AesPrefs.getInt("t-null-int", -1));
+        AesPrefs.putInt("t-null-int", null);
+        Log.i(TAG, "null? " + AesPrefs.getInt("t-null-int", -1));
+        Log.i(TAG, "null-test-passed? " + (AesPrefs.getInt("t-null-int", -1) == null));
 
         loadPreferences();
     }
-
 
     public void loadPreferences() {
         SharedPreferences sp = getSharedPreferences(".aesconfig", Context.MODE_PRIVATE);
@@ -61,22 +95,22 @@ public class MainActivity extends AppCompatActivity {
             Object pref = prefs.get(key);
             String printVal = "";
             if (pref instanceof Boolean) {
-                printVal = key + " : " + (Boolean) pref;
+                printVal = key + " : " + pref;
             }
             if (pref instanceof Float) {
-                printVal = key + " : " + (Float) pref;
+                printVal = key + " : " + pref;
             }
             if (pref instanceof Integer) {
-                printVal = key + " : " + (Integer) pref;
+                printVal = key + " : " + pref;
             }
             if (pref instanceof Long) {
-                printVal = key + " : " + (Long) pref;
+                printVal = key + " : " + pref;
             }
             if (pref instanceof String) {
-                printVal = key + " : " + (String) pref;
+                printVal = key + " : " + pref;
             }
             if (pref instanceof Set<?>) {
-                printVal = key + " : " + (Set<String>) pref;
+                printVal = key + " : " + pref;
             }
             Log.d(TAG, "loadPreferences: " + printVal);
         }

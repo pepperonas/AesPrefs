@@ -22,10 +22,13 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Base64;
 import android.util.Log;
+
 import com.pepperonas.aesprefs.Crypt.CryptSet;
 import com.pepperonas.aesprefs.Crypt.KeySet;
+
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.crypto.SecretKey;
 
 /**
@@ -35,6 +38,31 @@ import javax.crypto.SecretKey;
  * @see <a href="https://celox.io">https://celox.io</a>
  */
 public class AesPrefs {
+
+    /**
+     * The enum Aes setup.
+     */
+    enum AesSetup {
+        /**
+         * Inst date aes setup.
+         */
+        INST_DATE(".inst_date"),
+        /**
+         * Executions aes setup.
+         */
+        EXECUTIONS(".executions");
+
+        private final String s;
+
+        AesSetup(final String s) {
+            this.s = s;
+        }
+
+        @Override
+        public String toString() {
+            return s;
+        }
+    }
 
     private static final String TAIL = "=";
 
@@ -50,7 +78,7 @@ public class AesPrefs {
 
     private static String mFilename;
 
-    private static long mDuration = 0;
+    private static long mExecutionTime = 0;
     private static SecretKey mKey;
 
     /**
@@ -80,7 +108,6 @@ public class AesPrefs {
 
         private final int mode;
 
-
         /**
          * Instantiates a new Log mode.
          *
@@ -91,9 +118,7 @@ public class AesPrefs {
         }
     }
 
-
     private static LogMode mLog = LogMode.DEFAULT;
-
 
     /**
      * Log mode.
@@ -104,29 +129,27 @@ public class AesPrefs {
         mLog = logMode;
     }
 
-
     /**
      * Init (Recommended).
      *
-     * @param context the context
+     * @param context  the context
      * @param password the password
      */
     public static void init(@NonNull Context context,
-        @NonNull String password) {
+                            @NonNull String password) {
         mLog = LogMode.NONE;
         init(context, ".aesconfig", password);
     }
 
-
     /**
      * Init (Recommended).
      *
-     * @param context the context
+     * @param context  the context
      * @param password the password
-     * @param logMode the log mode
+     * @param logMode  the log mode
      */
     public static void init(@NonNull Context context,
-        @NonNull String password, @Nullable LogMode logMode) {
+                            @NonNull String password, @Nullable LogMode logMode) {
         if (logMode == null) {
             mLog = LogMode.NONE;
         } else {
@@ -138,13 +161,13 @@ public class AesPrefs {
     /**
      * Init.
      *
-     * @param context the context
+     * @param context  the context
      * @param filename the filename
      * @param password the password
-     * @param logMode the log mode
+     * @param logMode  the log mode
      */
     public static void init(@NonNull Context context, @NonNull String filename,
-        @NonNull String password, @Nullable LogMode logMode) {
+                            @NonNull String password, @Nullable LogMode logMode) {
         if (logMode == null) {
             mLog = LogMode.NONE;
         } else {
@@ -156,23 +179,24 @@ public class AesPrefs {
     /**
      * Init.
      *
-     * @param context the context
+     * @param context  the context
      * @param filename the filename
      * @param password the password
      */
-    public static void init(@NonNull Context context, @Nullable String filename, @NonNull
-    final String password) {
+    public static void init(@NonNull Context context, @Nullable String filename, @NonNull final String password) {
         if (mLog != LogMode.NONE) {
             Log.i(TAG, "Initializing AesPrefs...");
         }
 
         mCtx = context.getApplicationContext();
-        mFilename = filename;
-        String mPassword = password;
+        if (filename != null) {
+            mFilename = filename;
+        }
+        //        String mPassword = password;
 
         SharedPreferences sp = mCtx
-            .getSharedPreferences(mFilename, Context.MODE_PRIVATE);
-        String mSecRand = sp.getString("_sr", null);
+                .getSharedPreferences(mFilename, Context.MODE_PRIVATE);
+        String mSecRand = sp.getString("sr", null);
         KeySet mKs;
         byte[] mSrBytes;
         if (mSecRand == null) {
@@ -182,12 +206,11 @@ public class AesPrefs {
             mSecRand = Base64.encodeToString(mSrBytes, Base64.DEFAULT);
             sp.edit().putString("sr", mSecRand).apply();
         } else {
-            mSrBytes = Base64.decode(sp.getString("_sr", null), Base64.DEFAULT);
+            mSrBytes = Base64.decode(sp.getString("sr", null), Base64.DEFAULT);
             mKs = Crypt.getSecretKey(password, mSrBytes);
             mKey = mKs.getSecretKey();
         }
     }
-
 
     private static String toB32(byte[] bytes) {
         return Base64.encodeToString(bytes, Base64.DEFAULT);
@@ -197,11 +220,10 @@ public class AesPrefs {
         return Base64.decode(string, Base64.DEFAULT);
     }
 
-
     /**
      * Put.
      *
-     * @param key the key
+     * @param key   the key
      * @param value the value
      */
     public static void put(@NonNull String key, @Nullable String value) {
@@ -219,14 +241,13 @@ public class AesPrefs {
             Log.d(TAG, "put " + key + " <- " + value);
         }
 
-        mDuration += System.currentTimeMillis() - start;
+        mExecutionTime += System.currentTimeMillis() - start;
     }
-
 
     /**
      * Get string.
      *
-     * @param key the key
+     * @param key          the key
      * @param defaultValue the default value
      * @return the string
      */
@@ -239,122 +260,228 @@ public class AesPrefs {
         byte[] e = toByte(sp.getString(key, ""));
         byte[] i = toByte(sp.getString(key + TAIL, ""));
 
-        String de = Crypt.dec(mKey, i, e);
-        mDuration += System.currentTimeMillis() - start;
-        if (mLog == LogMode.ALL || mLog == LogMode.GET) {
-            Log.d(TAG, "get  " + key + " -> " + de);
+        try {
+
+            String de = Crypt.dec(mKey, i, e);
+            if (mLog == LogMode.ALL || mLog == LogMode.GET) {
+                Log.d(TAG, "get  " + key + " -> " + de);
+            }
+            mExecutionTime += System.currentTimeMillis() - start;
+            return de;
+        } catch (Exception ex) {
+            if (mLog == LogMode.ALL || mLog == LogMode.GET) {
+                Log.d(TAG, ex.getMessage());
+            }
+            mExecutionTime += System.currentTimeMillis() - start;
+            return defaultValue;
         }
-        return de;
     }
 
+    /**
+     * Init int boolean.
+     *
+     * @param key   the key
+     * @param value the value
+     * @return the boolean
+     */
+    public static boolean initInt(@NonNull String key, @Nullable Integer value) {
+        Integer i;
+        try {
+            i = getInt(key, Integer.MIN_VALUE + 1);
+            if (i == Integer.MIN_VALUE + 1) {
+                putInt(key, value);
+            }
+        } catch (Exception e) {
+            putInt(key, value);
+            return true;
+        }
+
+        return i == Integer.MIN_VALUE + 1;
+    }
 
     /**
      * Put int.
      *
-     * @param key the key
+     * @param key   the key
      * @param value the value
      */
     public static void putInt(@NonNull String key, @Nullable Integer value) {
-        long start = System.currentTimeMillis();
         put(key, String.valueOf(value));
-        mDuration += System.currentTimeMillis() - start;
     }
 
     /**
      * Gets int.
      *
-     * @param key the key
+     * @param key          the key
      * @param defaultValue the default value
      * @return the int
      */
     @Nullable
     public static Integer getInt(@NonNull String key, @Nullable Integer defaultValue) {
         long start = System.currentTimeMillis();
-        return Integer.valueOf(get(key, String.valueOf(defaultValue)));
+        try {
+            return Integer.valueOf(get(key, String.valueOf(defaultValue)));
+
+        } catch (NumberFormatException nfe) {
+            mExecutionTime += (System.currentTimeMillis() - start);
+            return null;
+        }
     }
 
+    public static boolean initBool(@NonNull String key, @Nullable Boolean value) {
+        Boolean b;
+        try {
+            b = getBool(key, null);
+            if (b == null) {
+                Log.i(TAG, "initBool: " + b);
+                putBool(key, value);
+                return true;
+            }
+        } catch (Exception e) {
+            putBool(key, value);
+            return true;
+        }
+
+        return false;
+    }
+
+    public static void putBool(@NonNull String key, @Nullable Boolean value) {
+        put(key, String.valueOf(value));
+    }
+
+    @Nullable
+    public static Boolean getBool(@NonNull String key, @Nullable Boolean defaultValue) {
+        long start = System.currentTimeMillis();
+        try {
+
+            //noinspection ConstantConditions
+            if (get(key, String.valueOf(defaultValue)).equals("null")) {
+                return null;
+            }
+
+            return Boolean.valueOf(get(key, String.valueOf(defaultValue)));
+
+        } catch (NumberFormatException nfe) {
+            mExecutionTime += (System.currentTimeMillis() - start);
+            return null;
+        }
+    }
+
+    public static boolean initFloat(@NonNull String key, @Nullable Float value) {
+        Float f;
+        try {
+            f = getFloat(key, Float.MIN_VALUE + 1F);
+            if (f == Float.MIN_VALUE + 1F) {
+                putFloat(key, value);
+            }
+        } catch (Exception e) {
+            putFloat(key, value);
+            return true;
+        }
+
+        return f == Float.MIN_VALUE + 1F;
+    }
 
     /**
      * Put float.
      *
-     * @param key the key
+     * @param key   the key
      * @param value the value
      */
     public static void putFloat(@NonNull String key, @Nullable Float value) {
-        long start = System.currentTimeMillis();
         put(key, String.valueOf(value));
-        mDuration += System.currentTimeMillis() - start;
     }
 
     /**
      * Gets float.
      *
-     * @param key the key
+     * @param key          the key
      * @param defaultValue the default value
      * @return the float
      */
     @Nullable
     public static Float getFloat(@NonNull String key, @Nullable Float defaultValue) {
-        long start = System.currentTimeMillis();
         return Float.valueOf(get(key, String.valueOf(defaultValue)));
+    }
+
+    public static boolean initDouble(@NonNull String key, @Nullable Double value) {
+        Double d;
+        try {
+            d = getDouble(key, Double.MIN_VALUE + 1D);
+            if (d == Float.MIN_VALUE + 1D) {
+                putDouble(key, value);
+            }
+        } catch (Exception e) {
+            putDouble(key, value);
+            return true;
+        }
+
+        return d == Double.MIN_VALUE + 1D;
     }
 
     /**
      * Put double.
      *
-     * @param key the key
+     * @param key   the key
      * @param value the value
      */
     public static void putDouble(@NonNull String key, @Nullable Double value) {
-        long start = System.currentTimeMillis();
         put(key, String.valueOf(value));
-        mDuration += System.currentTimeMillis() - start;
     }
 
     /**
      * Gets double.
      *
-     * @param key the key
+     * @param key          the key
      * @param defaultValue the default value
      * @return the double
      */
     @Nullable
     public static Double getDouble(@NonNull String key, @Nullable Double defaultValue) {
-        long start = System.currentTimeMillis();
         return Double.valueOf(get(key, String.valueOf(defaultValue)));
     }
 
+    public static boolean initLong(@NonNull String key, @Nullable Long value) {
+        Long l;
+        try {
+            l = getLong(key, Long.MIN_VALUE + 1L);
+            if (l == Long.MIN_VALUE + 1L) {
+                putLong(key, value);
+            }
+        } catch (Exception e) {
+            putLong(key, value);
+            return true;
+        }
+
+        return l == Long.MIN_VALUE + 1L;
+    }
 
     /**
      * Put long.
      *
-     * @param key the key
+     * @param key   the key
      * @param value the value
      */
     public static void putLong(@NonNull String key, @Nullable Long value) {
-        long start = System.currentTimeMillis();
         put(key, String.valueOf(value));
-        mDuration += System.currentTimeMillis() - start;
     }
 
     /**
      * Gets long.
      *
-     * @param key the key
+     * @param key          the key
      * @param defaultValue the default value
      * @return the long
      */
     @Nullable
     public static Long getLong(@NonNull String key, @Nullable Long defaultValue) {
-        long start = System.currentTimeMillis();
         return Long.valueOf(get(key, String.valueOf(defaultValue)));
     }
-
 
     /**
      * Store array.
      *
-     * @param key the key
+     * @param key    the key
      * @param values the values
      */
     public static void storeArray(@NonNull String key, @Nullable List<String> values) {
@@ -371,7 +498,6 @@ public class AesPrefs {
      * @return the list
      */
     public static List<String> restoreArray(@NonNull String key) {
-        long start = System.currentTimeMillis();
         int size = getInt(key + "_size", null);
         try {
             List<String> strings = new ArrayList<>();
@@ -380,8 +506,38 @@ public class AesPrefs {
             }
             return strings;
         } catch (Exception e) {
-            e.printStackTrace();
+            if (mLog == LogMode.ALL || mLog == LogMode.GET) {
+                e.printStackTrace();
+            }
+            return new ArrayList<>();
         }
-        return new ArrayList<>();
     }
+
+    /**
+     * Gets execution time.
+     *
+     * @return the execution time
+     */
+    public static long getExecutionTime() {
+        return mExecutionTime;
+    }
+
+    /**
+     * Gets installed.
+     *
+     * @return the installed
+     */
+    public static Long getInstalled() {
+        return getLong(AesSetup.INST_DATE.toString(), -1L);
+    }
+
+    /**
+     * Gets executions.
+     *
+     * @return the executions
+     */
+    public static Long getExecutions() {
+        return getLong(AesSetup.INST_DATE.toString(), -1L);
+    }
+
 }
